@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: card-api
+
+server:
+  port: 0 # random port
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
