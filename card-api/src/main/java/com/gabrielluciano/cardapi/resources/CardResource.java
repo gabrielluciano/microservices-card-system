@@ -2,7 +2,9 @@ package com.gabrielluciano.cardapi.resources;
 
 import com.gabrielluciano.cardapi.domain.Card;
 import com.gabrielluciano.cardapi.services.CardService;
+import com.gabrielluciano.cardapi.services.CustomerCardService;
 import com.gabrielluciano.cardapi.services.dto.CreateCardDTO;
+import com.gabrielluciano.cardapi.services.dto.CustomerCardDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,8 @@ import java.util.List;
 @Slf4j
 public class CardResource {
 
-    private final CardService service;
+    private final CardService cardService;
+    private final CustomerCardService customerCardService;
 
     @GetMapping
     public String status() {
@@ -27,13 +30,18 @@ public class CardResource {
 
     @PostMapping
     public ResponseEntity<Card> save(@RequestBody CreateCardDTO createCardDTO) {
-        Card card = service.save(createCardDTO);
+        Card card = cardService.save(createCardDTO);
         log.info("Created card with id '{}'", card.getId());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping(params = "income")
     public ResponseEntity<List<Card>> getAvailableCardsForIncome(@RequestParam("income") Long income) {
-        return ResponseEntity.ok(service.getAvailableCardsForIncome(income));
+        return ResponseEntity.ok(cardService.getAvailableCardsForIncome(income));
+    }
+
+    @GetMapping(params = "cpf")
+    public ResponseEntity<List<CustomerCardDTO>> getCardsByCpf(@RequestParam("cpf") String cpf) {
+        return ResponseEntity.ok(customerCardService.getCardsByCpf(cpf));
     }
 }
