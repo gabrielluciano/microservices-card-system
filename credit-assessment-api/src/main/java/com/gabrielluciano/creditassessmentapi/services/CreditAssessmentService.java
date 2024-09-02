@@ -1,8 +1,11 @@
 package com.gabrielluciano.creditassessmentapi.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.gabrielluciano.creditassessmentapi.domain.*;
 import com.gabrielluciano.creditassessmentapi.infra.clients.CardResourceClient;
 import com.gabrielluciano.creditassessmentapi.infra.clients.CustomerResourceClient;
+import com.gabrielluciano.creditassessmentapi.infra.mqueue.CardIssuanceRequestPublisher;
+import com.gabrielluciano.creditassessmentapi.services.exceptions.CardRequestErrorException;
 import com.gabrielluciano.creditassessmentapi.services.exceptions.CustomerDataNotFoundException;
 import com.gabrielluciano.creditassessmentapi.services.exceptions.MicroserviceCommunicationErrorException;
 import feign.FeignException;
@@ -15,6 +18,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class CreditAssessmentService {
 
     private final CustomerResourceClient customerClient;
     private final CardResourceClient cardClient;
+    private final CardIssuanceRequestPublisher cardIssuancePublisher;
 
     public CustomerStatus getCustomerStatus(String cpf)
             throws CustomerDataNotFoundException, MicroserviceCommunicationErrorException {
@@ -80,5 +85,19 @@ public class CreditAssessmentService {
         int age = Period.between(customerBirthday, LocalDate.now()).getYears();
         BigDecimal cardLimitFactor = BigDecimal.valueOf((double) age / 10);
         return cardDefaultLimit.multiply(cardLimitFactor);
+    }
+
+    public CardRequestProtocol requestCardIssuance(CardIssuanceRequestData data) {
+        try {
+            return tryToRequestCardIssuance(data);
+        } catch (Exception ex) {
+            throw new CardRequestErrorException(ex.getMessage(), ex);
+        }
+    }
+
+    private CardRequestProtocol tryToRequestCardIssuance(CardIssuanceRequestData data) throws JsonProcessingException {
+        cardIssuancePublisher.requestCard(data);
+        String protocol = UUID.randomUUID().toString();
+        return new CardRequestProtocol(protocol);
     }
 }

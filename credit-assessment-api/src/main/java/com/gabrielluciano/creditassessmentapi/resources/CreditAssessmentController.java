@@ -1,7 +1,9 @@
 package com.gabrielluciano.creditassessmentapi.resources;
 
 import com.gabrielluciano.creditassessmentapi.domain.AssessmentData;
+import com.gabrielluciano.creditassessmentapi.domain.CardIssuanceRequestData;
 import com.gabrielluciano.creditassessmentapi.services.CreditAssessmentService;
+import com.gabrielluciano.creditassessmentapi.services.exceptions.CardRequestErrorException;
 import com.gabrielluciano.creditassessmentapi.services.exceptions.CustomerDataNotFoundException;
 import com.gabrielluciano.creditassessmentapi.services.exceptions.MicroserviceCommunicationErrorException;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,16 @@ public class CreditAssessmentController {
         } catch (MicroserviceCommunicationErrorException ex) {
             log.error("Microservice communication error", ex);
             return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
+        }
+    }
+
+    @PostMapping("card-requests")
+    public ResponseEntity<?> requestCardIssuance(@RequestBody CardIssuanceRequestData data) {
+        try {
+            return ResponseEntity.ok(service.requestCardIssuance(data));
+        } catch (CardRequestErrorException ex) {
+            log.error("Error processing card request", ex);
+            return ResponseEntity.internalServerError().body(ex.getMessage());
         }
     }
 }
