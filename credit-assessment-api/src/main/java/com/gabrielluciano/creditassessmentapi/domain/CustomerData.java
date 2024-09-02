@@ -1,4 +1,6 @@
 package com.gabrielluciano.creditassessmentapi.domain;
 
-public record CustomerData(Long id, String name) {
+import java.time.LocalDate;
+
+public record CustomerData(Long id, String name, LocalDate birthday) {
 }

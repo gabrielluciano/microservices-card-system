@@ -1,15 +1,13 @@
 package com.gabrielluciano.creditassessmentapi.resources;
 
+import com.gabrielluciano.creditassessmentapi.domain.AssessmentData;
 import com.gabrielluciano.creditassessmentapi.services.CreditAssessmentService;
 import com.gabrielluciano.creditassessmentapi.services.exceptions.CustomerDataNotFoundException;
 import com.gabrielluciano.creditassessmentapi.services.exceptions.MicroserviceCommunicationErrorException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("credit-assessments")
@@ -29,6 +27,18 @@ public class CreditAssessmentController {
     public ResponseEntity<?> checkCustomerStatus(@RequestParam("cpf") String cpf) {
         try {
             return ResponseEntity.ok(service.getCustomerStatus(cpf));
+        } catch (CustomerDataNotFoundException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (MicroserviceCommunicationErrorException ex) {
+            log.error("Microservice communication error", ex);
+            return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<?> doCreditAssessment(@RequestBody AssessmentData data) {
+        try {
+            return ResponseEntity.ok(service.doCreditAssessment(data));
         } catch (CustomerDataNotFoundException ex) {
             return ResponseEntity.notFound().build();
         } catch (MicroserviceCommunicationErrorException ex) {

@@ -1,5 +1,6 @@
 package com.gabrielluciano.creditassessmentapi.infra.clients;
 
+import com.gabrielluciano.creditassessmentapi.domain.Card;
 import com.gabrielluciano.creditassessmentapi.domain.CustomerCard;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -13,4 +14,7 @@ public interface CardResourceClient {
 
     @GetMapping(params = "cpf")
     ResponseEntity<List<CustomerCard>> getCardsByCpf(@RequestParam("cpf") String cpf);
+
+    @GetMapping(params = "income")
+    ResponseEntity<List<Card>> getAvailableCardsForIncome(@RequestParam("income") Long income);
 }

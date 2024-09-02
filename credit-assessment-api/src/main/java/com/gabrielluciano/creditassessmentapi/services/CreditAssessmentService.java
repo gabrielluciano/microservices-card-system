@@ -1,8 +1,6 @@
 package com.gabrielluciano.creditassessmentapi.services;
 
-import com.gabrielluciano.creditassessmentapi.domain.CustomerCard;
-import com.gabrielluciano.creditassessmentapi.domain.CustomerData;
-import com.gabrielluciano.creditassessmentapi.domain.CustomerStatus;
+import com.gabrielluciano.creditassessmentapi.domain.*;
 import com.gabrielluciano.creditassessmentapi.infra.clients.CardResourceClient;
 import com.gabrielluciano.creditassessmentapi.infra.clients.CustomerResourceClient;
 import com.gabrielluciano.creditassessmentapi.services.exceptions.CustomerDataNotFoundException;
@@ -12,6 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -32,7 +34,7 @@ public class CreditAssessmentService {
         }
     }
 
-    public CustomerStatus tryToGetCustomerStatus(String cpf) {
+    private CustomerStatus tryToGetCustomerStatus(String cpf) {
         ResponseEntity<CustomerData> customerDataResponse = customerClient.customerData(cpf);
         ResponseEntity<List<CustomerCard>> customerCardsResponse = cardClient.getCardsByCpf(cpf);
 
@@ -40,5 +42,43 @@ public class CreditAssessmentService {
                 .customer(customerDataResponse.getBody())
                 .cards(customerCardsResponse.getBody())
                 .build();
+    }
+
+    public CreditAssessment doCreditAssessment(AssessmentData data)
+            throws CustomerDataNotFoundException, MicroserviceCommunicationErrorException {
+        try {
+            return tryToDoCreditAssessment(data);
+        } catch (FeignException.NotFound ex) {
+            throw new CustomerDataNotFoundException(data.cpf(), ex);
+        } catch (FeignException.FeignClientException ex) {
+            throw new MicroserviceCommunicationErrorException(ex.getMessage(), ex.status(), ex);
+        }
+    }
+
+    private CreditAssessment tryToDoCreditAssessment(AssessmentData data) {
+        ResponseEntity<CustomerData> customerDataResponse = customerClient.customerData(data.cpf());
+        ResponseEntity<List<Card>> availableCardsResponse = cardClient.getAvailableCardsForIncome(data.income());
+
+        CustomerData customerData = customerDataResponse.getBody();
+        List<Card> availableCards = availableCardsResponse.getBody();
+
+        if (customerData == null || availableCards == null)
+            return new CreditAssessment(Collections.emptyList());
+
+        List<CustomerCard> customerCards = getCustomerCards(availableCards, customerData.birthday());
+        return new CreditAssessment(customerCards);
+    }
+
+    private List<CustomerCard> getCustomerCards(List<Card> availableCards, LocalDate customerBirthday) {
+        return availableCards.stream().map(card -> {
+            BigDecimal approvedLimit = calculateApprovedLimitForCustomer(card.defaultLimit(), customerBirthday);
+            return new CustomerCard(card.name(), card.brand(), approvedLimit);
+        }).toList();
+    }
+
+    private BigDecimal calculateApprovedLimitForCustomer(BigDecimal cardDefaultLimit, LocalDate customerBirthday) {
+        int age = Period.between(customerBirthday, LocalDate.now()).getYears();
+        BigDecimal cardLimitFactor = BigDecimal.valueOf((double) age / 10);
+        return cardDefaultLimit.multiply(cardLimitFactor);
     }
 }
