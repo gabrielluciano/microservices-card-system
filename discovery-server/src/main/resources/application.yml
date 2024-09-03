@@ -2,6 +2,11 @@ spring:
   application:
     name: discovery-server
 
+security:
+  user:
+    username: discovery-server-user
+    password: ZGlzY292ZXJ5LXNlcnZlci11c2Vy
+
 server:
   port: 8761
 
