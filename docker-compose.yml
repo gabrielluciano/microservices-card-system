@@ -4,6 +4,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.4
     hostname: ${KEYCLOAK_HOST:-keycloak}
+    restart: always
     ports:
       - ${KEYCLOAK_ADMIN_PORT:-8081}:8080
     environment:
@@ -16,6 +17,7 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management
     hostname: ${RABBITMQ_HOST:-rabbitmq}
+    restart: always
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
@@ -28,6 +30,7 @@ services:
   discovery-server:
     image: gabrielluciano/card-system-discovery-server:1.0
     hostname: ${EUREKA_HOST:-discovery-server}
+    restart: always
     ports:
       - ${EUREKA_ADMIN_PORT:-8761}:8761
     environment:
@@ -36,49 +39,9 @@ services:
     networks:
       - card-system
 
-  customer-api:
-    image: gabrielluciano/card-system-customer-api:1.0
-    environment:
-      - EUREKA_HOST=${EUREKA_HOST:-discovery-server}
-      - EUREKA_USERNAME=${EUREKA_USERNAME}
-      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
-    networks:
-      - card-system
-    depends_on:
-      - discovery-server
-
-  card-api:
-    image: gabrielluciano/card-system-card-api:1.0
-    environment:
-      - EUREKA_HOST=${EUREKA_HOST:-discovery-server}
-      - EUREKA_USERNAME=${EUREKA_USERNAME}
-      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
-      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
-    networks:
-      - card-system
-    depends_on:
-      - discovery-server
-      - rabbitmq
-
-  credit-assessment-api:
-    image: gabrielluciano/card-system-credit-assessment-api:1.0
-    environment:
-      - EUREKA_HOST=${EUREKA_HOST:-discovery-server}
-      - EUREKA_USERNAME=${EUREKA_USERNAME}
-      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
-      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
-    networks:
-      - card-system
-    depends_on:
-      - discovery-server
-      - rabbitmq
-
   api-gateway:
     image: gabrielluciano/card-system-api-gateway:1.0
+    restart: always
     ports:
       - 8080:8080
     environment:
@@ -92,6 +55,62 @@ services:
     depends_on:
       - discovery-server
       - keycloak
+
+  customer-api:
+    image: gabrielluciano/card-system-customer-api:1.0
+    restart: always
+    environment:
+      - EUREKA_HOST=${EUREKA_HOST:-discovery-server}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+    networks:
+      - card-system
+    depends_on:
+      - discovery-server
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: vip
+
+  card-api:
+    image: gabrielluciano/card-system-card-api:1.0
+    restart: always
+    environment:
+      - EUREKA_HOST=${EUREKA_HOST:-discovery-server}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+    networks:
+      - card-system
+    depends_on:
+      - discovery-server
+      - rabbitmq
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: vip
+
+  credit-assessment-api:
+    image: gabrielluciano/card-system-credit-assessment-api:1.0
+    restart: always
+    environment:
+      - EUREKA_HOST=${EUREKA_HOST:-discovery-server}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+    networks:
+      - card-system
+    depends_on:
+      - discovery-server
+      - rabbitmq
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: vip
 
 networks:
   card-system:
