@@ -11,7 +11,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8081/realms/card-system
+          issuer-uri: http://${KEYCLOAK_HOST}:${KEYCLOAK_PORT}/realms/card-system
 
 server:
   port: 8080
@@ -19,7 +19,7 @@ server:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://user:password@localhost:8761/eureka/
+      defaultZone: http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:8761/eureka/
 
 management:
   endpoints:

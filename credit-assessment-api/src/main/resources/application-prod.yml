@@ -1,6 +1,11 @@
 spring:
   application:
-    name: customer-api
+    name: credit-assessment-api
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: 5672
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
 
 server:
   port: 0 # random port
@@ -10,7 +15,11 @@ eureka:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
   client:
     serviceUrl:
-      defaultZone: http://user:password@localhost:8761/eureka/
+      defaultZone: http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:8761/eureka/
+
+mq:
+  queues:
+    card-issuance: card-issuance
 
 management:
   endpoints:

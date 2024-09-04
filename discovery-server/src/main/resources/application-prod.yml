@@ -4,8 +4,8 @@ spring:
 
 security:
   user:
-    username: user
-    password: password
+    username: ${EUREKA_USERNAME}
+    password: ${EUREKA_PASSWORD}
 
 server:
   port: 8761
