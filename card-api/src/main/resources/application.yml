@@ -2,10 +2,10 @@ spring:
   application:
     name: card-api
   rabbitmq:
-    host: localhost
+    host: ${RABBITMQ_HOST:localhost}
     port: 5672
-    username: guest
-    password: guest
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 server:
   port: 0 # random port
@@ -15,7 +15,7 @@ eureka:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
   client:
     serviceUrl:
-      defaultZone: http://discovery-server-user:ZGlzY292ZXJ5LXNlcnZlci11c2Vy@localhost:8761/eureka/
+      defaultZone: http://${EUREKA_USERNAME:user}:${EUREKA_PASSWORD:password}@${EUREKA_HOST:localhost}:8761/eureka/
 
 mq:
   queues:
